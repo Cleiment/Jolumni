@@ -21,7 +21,7 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->date('tgl_lahir');
             $table->year('tahun_masuk');
-            $table->year('tahun_keluar');
+            $table->year('tahun_selesai');
             $table->enum('jurusan', ['TKJ', 'AKL', 'BDP']);
             $table->text('alamat');
             $table->string('no_telp', 20);
