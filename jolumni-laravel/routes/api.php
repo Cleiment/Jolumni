@@ -37,8 +37,8 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
   Route::get('/apaaja', function(){
     return User::all();
   });
-  Route::get('/logout', [UserController::class, 'logout']);
-
+  Route::post('/logout', [UserController::class, 'logout']);
+  
   Route::get('/follow', [UserController::class, 'checkFollow']);
   Route::post('/follow', [UserController::class, 'follow']);
 

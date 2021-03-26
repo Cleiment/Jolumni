@@ -20,12 +20,29 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
+        $validated = Validator::make($request->all(), [
+            'email'=>'required|email',
+            'password'=>'required'
+        ]);
+        if ($validated->fails()) {
+            $errors = $validated->errors();
+            $nferrors = [];
+            foreach ($errors->all() as $message) {
+                array_push($nferrors, $message);
+            }
+            return response([
+                'errors' => $nferrors
+            ], 400);
+        }
         $user = User::where('email', $request->email)->first();
-        
+        // return response([
+        //     'user' => $user,
+        //     'request' => $request->all()
+        // ]);
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response([
                 'message' => ['The provided credentials does not match our records']
-            ], 404);
+            ]);
         }
 
         $user->tokens()->where('tokenable_id', $user->user_id)->delete();
@@ -35,7 +52,7 @@ class UserController extends Controller
         return response([
             'user' => $user,
             'token' => $token
-        ], 200);
+        ]);
     }
 
     public function register(Request $request)
@@ -44,7 +61,7 @@ class UserController extends Controller
             'nama_depan'=>'required|max:100',
             'nama_belakang'=>'required|max:100',
             'email'=>'required|email|unique:users,email',
-            'password'=>'required',
+            'password'=>'required|min:6',
             'tgl_lahir'=>'required|date',
             'tahun_masuk'=>'required|size:4',
             'tahun_selesai'=>'required|size:4',
@@ -99,10 +116,11 @@ class UserController extends Controller
     public function logout(Request $request)
     {
         $user = request()->user();
-        $user->tokens()->where('id',$user->currentAccessToken()->id)->delete();
-        // $user->tokens()-delete();
+        $user->tokens()->where('id', $user->currentAccessToken()->id)->delete();
         
-        return 'berhasil';
+        return response([
+            'message' => 'berhasil'
+        ]);
     }
 
     // FOLLOW
