@@ -19,15 +19,15 @@ class CreateUsersTable extends Migration
             $table->string('nama_belakang', 100);
             $table->text('email')->unique();
             $table->string('password');
-            $table->date('tgl_lahir');
-            $table->year('tahun_masuk');
-            $table->year('tahun_selesai');
-            $table->enum('jurusan', ['TKJ', 'AKL', 'BDP']);
-            $table->text('alamat');
-            $table->string('no_telp', 20);
-            $table->text('pekerjaan');
-            $table->text('gambar');
-            $table->rememberToken();
+            $table->date('tgl_lahir')->nullable();
+            $table->year('tahun_masuk')->nullable();
+            $table->year('tahun_selesai')->nullable();
+            $table->enum('jurusan', ['TKJ', 'AKL', 'BDP'])->nullable();
+            $table->text('alamat')->nullable();
+            $table->string('no_telp', 20)->nullable();
+            $table->text('pekerjaan')->nullable();
+            $table->text('gambar')->nullable();
+            $table->rememberToken()->nullable();
             $table->timestamps();
         });
     }

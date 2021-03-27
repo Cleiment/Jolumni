@@ -28,8 +28,8 @@
       </ul>
       <div class="col-2" v-if="!loggedIn">
         <div class="justify-content-around d-flex">
-          <button class="btn btn-primary">Login</button>
-          <button class="btn btn-primary">Register</button>
+          <button @click="activeScreen='Login'" class="btn btn-primary">Login</button>
+          <button @click="activeScreen='Register'" class="btn btn-primary">Register</button>
         </div>
       </div>
       <div class="col-1" v-else-if="loggedIn">
@@ -38,11 +38,15 @@
     </div>
   </nav>
   <div class="container">
-    <div v-if="activeScreen == 'Login'">
-      <Login @loginUser="loginUser($event)" @logout="logout" :loggedIn="loggedIn"/>
-    </div>
-    <div v-else-if="activeScreen == 'Register'">
-      <Register :msg="'Register ni bang'" />
+    <div class="row justify-content-around">
+      <div class="col-9 bg-light bg-lr">
+        <div v-if="activeScreen == 'Login'">
+          <Login @loginUser="loginUser($event)" @logout="logout" :loggedIn="loggedIn"/>
+        </div>
+        <div v-else-if="activeScreen == 'Register'">
+          <Register @register="register" />
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -82,27 +86,34 @@ export default {
       }
     },
     loginUser(rs){
+      alert('Login Success!');
       localStorage.setItem('user_data', JSON.stringify(rs.user));
       localStorage.setItem('token', rs.token);
       localStorage.setItem('loggedIn', JSON.stringify({ 'log' : true }));
       this.checkLoggedIn();
+      this.activeScreen = 'Home';
+    },
+    register(){
+      alert("You have registered! Now you can login!");
+      this.activeScreen = 'Login';
     },
     async logout(){
-      // console.log(this.token);
-      await axios.post('http://localhost:8000/api/logout', {}, {
-        headers: {
-          'Authorization': `Bearer ${this.token}`
-        }
-      })
-      .then(function () {
-        localStorage.removeItem('user_data');
-        localStorage.removeItem('token');
-        localStorage.setItem('loggedIn', JSON.stringify({ 'log' : false }));
-      })
-      .catch(function (e){
-        console.log(e)
-      });
-      this.checkLoggedIn();
+      if (confirm('Are you sure you want to logout?',)) {
+        await axios.post('http://localhost:8000/api/logout', {}, {
+          headers: {
+            'Authorization': `Bearer ${this.token}`
+          }
+        })
+        .then(function () {
+          localStorage.removeItem('user_data');
+          localStorage.removeItem('token');
+          localStorage.setItem('loggedIn', JSON.stringify({ 'log' : false }));
+        })
+        .catch(function (e){
+          console.log(e)
+        });
+        this.checkLoggedIn();
+      }
     }
   }
 }
@@ -118,6 +129,11 @@ export default {
   color: white;
 }
 nav{
-  margin-bottom: 35px;
+  margin-bottom: 45px;
+}
+.bg-lr{
+  border-radius: 5px;
+  padding: 10px;
+  border: 1px solid #dfdfdf;
 }
 </style>

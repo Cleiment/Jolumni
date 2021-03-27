@@ -25,7 +25,7 @@ use App\Models\User;
 // });
 
 Route::post('/login', [UserController::class, 'login']);
-Route::post('/register', [UserController::class, 'register']);
+Route::post('/register', [UserController::class, 'regStage1']);
 
 Route::get('/lowongan', [LowonganController::class, 'getAll']);
 Route::get('/lowongan/{id}', [LowonganController::class, 'getSpecific']);
@@ -34,9 +34,8 @@ Route::get('/post', [UserPostController::class, 'getAll']);
 Route::get('/post/{id}', [UserPostController::class, 'getSpecific']);
 
 Route::group(['middleware' => 'auth:sanctum'], function(){
-  Route::get('/apaaja', function(){
-    return User::all();
-  });
+  Route::post('/edit_profile', [UserController::class, 'regStage2']);
+
   Route::post('/logout', [UserController::class, 'logout']);
   
   Route::get('/follow', [UserController::class, 'checkFollow']);

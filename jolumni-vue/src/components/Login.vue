@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="padding : 2px 5px">
     <h1>Login</h1>
     <hr>
     <div class="alert alert-danger" role="alert" v-if="errors.length != 0">
