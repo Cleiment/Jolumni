@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Lowongan;
 use App\Models\LowonganDetail;
 
@@ -20,12 +21,35 @@ class LowonganController extends Controller
         return Lowongan::where('id', $id)->first();
     }
 
+    public function getRandom(){
+        $lowongan = Lowongan::all();
+
+        if ($lowongan->count() >= 4) {
+            $random_count = 4;
+        }
+        else if ($lowongan->count() < 4){
+            $random_count = $lowongan->count();
+        }
+        $low = $lowongan->random($random_count)->shuffle();
+        for ($i = 0; $i < count($low); $i++) { 
+            $user = User::where('user_id', $low[$i]->owner)->first();
+            $low[$i]->nama_depan = $user->nama_depan;
+            $lowD = LowonganDetail::where('lowongan_id', $low[$i]->id)->get();
+            $lowP = array();
+            foreach ($lowD as $value) {
+                array_push($lowP, $value);
+            }
+
+            $low[$i]->pelamar = $lowP;
+        }
+        return $low;
+    }
+
     public function create(Request $request)
     {
         $validated = Validator::make($request->all(), [
             'judul'=>'required|max:50',
-            'detail_lowongan'=>'required',
-            'gambar'=>'required|file',
+            'detail_lowongan'=>'required'
         ]);
 
         if ($validated->fails()) {
@@ -36,7 +60,7 @@ class LowonganController extends Controller
             }
             return response([
                 'errors' => $nferrors
-            ]);
+            ], 400);
         }
 
         $newlowongan = new Lowongan;
@@ -44,15 +68,11 @@ class LowonganController extends Controller
         $newlowongan->judul = $request->judul;
         $newlowongan->detail_lowongan = $request->detail_lowongan;
         $newlowongan->owner = request()->user()->user_id;
-
-        $file = $request->gambar;
-        $path = $file->store('Lowongan', 'public');
-        $newlowongan->gambar = $path;
         
         $newlowongan->save();
 
         return response([
-            'message' => 'berhasil'
+            'msg' => 'berhasil'
         ]);
     }
 

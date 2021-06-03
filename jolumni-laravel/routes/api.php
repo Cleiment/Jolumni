@@ -26,15 +26,21 @@ use App\Models\User;
 
 Route::post('/login', [UserController::class, 'login']);
 Route::post('/register', [UserController::class, 'regStage1']);
-
-Route::get('/lowongan', [LowonganController::class, 'getAll']);
-Route::get('/lowongan/{id}', [LowonganController::class, 'getSpecific']);
+Route::get('/getUser/{id}', [UserController::class, 'getUserWithId']);
 
 Route::get('/post', [UserPostController::class, 'getAll']);
-Route::get('/post/{id}', [UserPostController::class, 'getSpecific']);
+Route::get('/get_post_owner/{id}', [UserPostController::class, 'getSpecificOwner']);
+Route::get('/get_post_random', [UserPostController::class, 'getRandom']);
+
+Route::get('/lowongan', [LowonganController::class, 'getAll']);
+Route::get('/get_lowongan_owner/{id}', [LowonganController::class, 'getSpecificOwner']);
+Route::get('/get_lowongan_random', [LowonganController::class, 'getRandom']);
 
 Route::group(['middleware' => 'auth:sanctum'], function(){
-  Route::post('/edit_profile', [UserController::class, 'regStage2']);
+  Route::post('/getUser', [UserController::class, 'getUser']);
+
+  Route::post('/edit_profile', [UserController::class, 'edit']);
+  Route::post('/delete_account', [UserController::class, 'delAcc']);
 
   Route::post('/logout', [UserController::class, 'logout']);
   
@@ -51,4 +57,5 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
 
   Route::post('/lamar', [LowonganController::class, 'lamar']);
   Route::post('/like', [UserPostController::class, 'like']);
+  Route::post('/unlike', [UserPostController::class, 'unlike']);
 });

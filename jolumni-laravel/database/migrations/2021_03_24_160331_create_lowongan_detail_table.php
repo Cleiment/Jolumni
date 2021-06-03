@@ -19,6 +19,7 @@ class CreateLowonganDetailTable extends Migration
             $table->foreign('lowongan_id')->references('id')->on('lowongan');
             $table->string('pelamar', 10);
             $table->foreign('pelamar')->references('user_id')->on('users');
+            $table->boolean('accepted')->default('0');
             $table->timestamps();
         });
     }

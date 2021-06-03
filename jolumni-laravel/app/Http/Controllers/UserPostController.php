@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\UserPost;
 use App\Models\UserPostLike;
 
@@ -13,18 +14,76 @@ class UserPostController extends Controller
 {
     public function getAll()
     {
-        return UserPost::all();
+        $user_post = UserPost::all()->shuffle();
+        for ($i = 0; $i < count($user_post); $i++) { 
+            $user = User::where('user_id', $user_post[$i]->owner)->first();
+            $user_post[$i]->nama_depan = $user->nama_depan;
+            $post_like = UserPostLike::where('post_id', $user_post[$i]->id)->get();
+            $post_likes = array();
+            foreach ($post_like as $value) {
+                array_push($post_likes, $value);
+            }
+
+            $user_post[$i]->like = $post_likes;
+        }
+
+        return $user_post;
     }
 
     public function getSpecific($id){
         return UserPost::where('id', $id)->first();
     }
 
+    public function getSpecificOwner($id)
+    {
+        $user_post_owner = UserPost::where('owner', $id)->get();
+
+        for ($i = 0; $i < count($user_post_owner); $i++) { 
+            $user_post_owner[$i]->nama_depan = User::where('user_id', $user_post_owner[$i]->owner)->get('nama_depan');
+            $post_like = UserPostLike::where('post_id', $user_post_owner[$i]->id)->get();
+            $post_likes = array();
+            foreach ($post_like as $value) {
+                array_push($post_likes, $value);
+            }
+
+            $user_post_owner[$i]->like = $post_likes;
+        }
+
+        return $user_post_owner;
+    }
+
+    public function getRandom()
+    {
+        $user_posts = UserPost::all();
+
+        if ($user_posts->count() >= 4) {
+            $random_count = 4;
+        }
+        else if ($user_posts->count() < 4){
+            $random_count = $user_posts->count();
+        }
+
+        $user_post = UserPost::all()->random($random_count)->shuffle();
+        for ($i = 0; $i < count($user_post); $i++) { 
+            $user = User::where('user_id', $user_post[$i]->owner)->first();
+            $user_post[$i]->nama_depan = $user->nama_depan;
+            $post_like = UserPostLike::where('post_id', $user_post[$i]->id)->get();
+            $post_likes = array();
+            foreach ($post_like as $value) {
+                array_push($post_likes, $value);
+            }
+
+            $user_post[$i]->like = $post_likes;
+        }
+
+        return $user_post;
+    }
+
     public function create(Request $request)
     {
         $validated = Validator::make($request->all(), [
             'caption'=>'required|max:100',
-            'gambar'=>'required|file',
+            'file'=>'required|file',
         ]);
 
         if ($validated->fails()) {
@@ -35,7 +94,7 @@ class UserPostController extends Controller
             }
             return response([
                 'errors' => $nferrors
-            ]);
+            ],400);
         }
 
         $newpost = new UserPost;
@@ -43,14 +102,14 @@ class UserPostController extends Controller
         $newpost->caption = $request->caption;
         $newpost->owner = request()->user()->user_id;
 
-        $file = $request->gambar;
+        $file = $request->file;
         $path = $file->store('UserPost', 'public');
         $newpost->gambar = $path;
         
         $newpost->save();
 
         return response([
-            'message' => 'berhasil'
+            'msg' => 'berhasil'
         ]);
     }
 
@@ -70,7 +129,7 @@ class UserPostController extends Controller
             }
             return response([
                 'errors' => $nferrors
-            ]);
+            ], 400);
         }
 
         $post = UserPost::where('id', $request->id)->first();
@@ -87,18 +146,21 @@ class UserPostController extends Controller
         $post->save();
 
         return response([
-            'message' => 'berhasil'
+            'msg' => 'berhasil'
         ]);
     }
 
     public function drop(Request $request)
     {
         $post = UserPost::where('id', $request->id)->first();
+
+        UserPostLike::where('post_id', $post->id)->delete();
+
         Storage::disk('public')->delete($post->gambar);
-        $post->delete();
+        UserPost::where('id', $request->id)->delete();
 
         return response([
-            'message' => 'berhasil'
+            'message' => 'Berhasil Hapus Post!'
         ]);
     }
 
@@ -116,7 +178,7 @@ class UserPostController extends Controller
         $like->save();
 
         return response([
-            'message' => 'berhasil'
+            'msg' => 'berhasil'
         ]);
     }
 
@@ -126,7 +188,7 @@ class UserPostController extends Controller
         $like->delete();
 
         return response([
-            'message' => 'berhasil'
+            'msg' => 'berhasil'
         ]);
     }
 }

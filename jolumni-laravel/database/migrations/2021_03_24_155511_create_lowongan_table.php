@@ -19,7 +19,6 @@ class CreateLowonganTable extends Migration
             $table->text('detail_lowongan');
             $table->string('owner', 10);
             $table->foreign('owner')->references('user_id')->on('users');
-            $table->text('gambar');
             $table->timestamps();
         });
     }

@@ -25,7 +25,8 @@
         </div>
       </div>
       <div class="form-group text-center">
-        <input class="form-control btn btn-primary" value="Login" type="submit">
+        <input v-if="!loading" class="form-control btn btn-primary" value="Login" type="submit">
+        <button class="form-control btn btn-primary disabled" disabled v-else>Loading...</button>
       </div>
     </form>
   </div>
@@ -40,7 +41,8 @@ export default {
     return{
       email: '',
       pass: '',
-      errors: []
+      errors: [],
+      loading: false
     }
   },
   props: {
@@ -50,6 +52,7 @@ export default {
     async login(e){
       e.preventDefault();
       this.errors = [];
+      this.loading = true
 
       if (this.loggedIn) {
         this.$emit('logout');
@@ -73,6 +76,8 @@ export default {
           err = e.response.data.errors;
         }
       });
+      
+      this.loading = false
 
       if (err.length > 0) {
         this.errors = err

@@ -41,7 +41,8 @@
         </div>
       </div>
       <div class="form-group text-center">
-        <input class="form-control btn btn-primary" value="Register" type="submit">
+        <input class="form-control btn btn-primary" value="Register" type="submit" v-if="!loading">
+        <button class="form-control btn btn-primary disabled" disabled v-else>Loading...</button>
       </div>
     </form>
   </div>
@@ -59,7 +60,8 @@ export default {
       email: '',
       password: '',
       jurusan: 'TKJ',
-      errors: []
+      errors: [],
+      loading: false
     }
   },
   props: {
@@ -69,6 +71,7 @@ export default {
     async register(e){
       e.preventDefault();
       this.errors = [];
+      this.loading = true;
 
       var err = [];
       await axios.post('http://localhost:8000/api/register', {
@@ -88,6 +91,8 @@ export default {
           err = e.response.data.errors;
         }
       });
+      
+      this.loading = false
 
       if (err.length > 0) {
         this.errors = err

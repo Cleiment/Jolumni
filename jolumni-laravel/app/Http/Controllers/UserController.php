@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Follow;
+use App\Models\Lowongan;
+use App\Models\LowonganDetail;
+use App\Models\UserPost;
+use App\Models\UserPostLike;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -17,6 +21,16 @@ use Laravel\Sanctum\Sanctum;
 class UserController extends Controller
 {
     // USER
+
+    public function getUser()
+    {
+        return User::where('user_id', request()->user()->user_id)->first();
+    }
+
+    public function getUserWithId($id)
+    {
+        return User::where('user_id', $id)->first();
+    }
 
     public function login(Request $request)
     {
@@ -50,7 +64,6 @@ class UserController extends Controller
         $token = $user->createToken(Str::random(60))->plainTextToken;
 
         return response([
-            'user' => $user,
             'token' => $token
         ]);
     }
@@ -83,6 +96,7 @@ class UserController extends Controller
         $newuser->email = $request->email;
         $newuser->jurusan = $request->jurusan;
         $newuser->password = Hash::make($request->password);
+        $newuser->gambar = 'User/default.png';
 
         if(count(User::all()) != 0){
             $id = User::all()->last()->user_id;
@@ -94,20 +108,24 @@ class UserController extends Controller
         $newuser->save();
 
         return response([
-            'message' => 'berhasil'
+            'msg' => 'berhasil'
         ]);
     }
 
-    public function regStage2(Request $request)
+    public function edit(Request $request)
     {
         $validated = Validator::make($request->all(), [
+            'nama_depan'=>'required',
+            'nama_belakang'=>'required',
+            'email'=>'required',
             'tgl_lahir'=>'required|date',
             'tahun_masuk'=>'required|size:4',
             'tahun_selesai'=>'required|size:4',
-            'alamat'=>'required',
             'no_telp'=>'required|max:20',
-            'pekerjaan'=>'required',
-            'gambar'=>'required|file'
+            'confPassword'=>'required',
+            // 'alamat'=>'required',
+            // 'pekerjaan'=>'required',
+            // 'gambar'=>'required|file'
         ]);
 
         if ($validated->fails()) {
@@ -118,24 +136,41 @@ class UserController extends Controller
             }
             return response([
                 'errors' => $nferrors
+            ], 400);
+        }
+
+        $user = User::where('user_id', request()->user()->user_id)->first();
+
+        if (!$user || !Hash::check($request->confPassword, $user->password)) {
+            return response([
+                'message' => ['The password is wrong!']
             ]);
         }
 
-        $newuser = User::where('id', request()->user()->user_id);
+        $user->nama_depan = $request->nama_depan;
+        $user->nama_belakang = $request->nama_belakang;
+        $user->email = $request->email;
+        $user->tgl_lahir = $request->tgl_lahir;
+        $user->no_telp = $request->no_telp;
+        $user->tahun_masuk = $request->tahun_masuk;
+        $user->tahun_selesai = $request->tahun_selesai;
+        $user->jurusan = $request->jurusan;
+        $user->alamat = $request->alamat;
+        $user->pekerjaan = $request->pekerjaan;
 
-        $newuser->tgl_lahir = $request->tgl_lahir;
-        $newuser->tahun_masuk = $request->tahun_masuk;
-        $newuser->tahun_selesai = $request->tahun_selesai;
-        $newuser->alamat = $request->alamat;
-        $newuser->no_telp = $request->no_telp;
-        $newuser->pekerjaan = $request->pekerjaan;
+        if ($request->fileNya == 'upload') {
+            if ($user->gambar != 'User/default.png') {
+                Storage::disk('public')->delete($user->gambar);
+            }
+            $file = $request->file;
+            $path = $file->store('User', 'public');
+            $user->gambar = $path;
+        }
 
-        $newuser->gambar = '/User/default.png';
-
-        $newuser->save();
+        $user->save();
 
         return response([
-            'message' => 'berhasil'
+            'msg' => 'berhasil'
         ]);
     }
 
@@ -145,7 +180,7 @@ class UserController extends Controller
         $user->tokens()->where('id', $user->currentAccessToken()->id)->delete();
         
         return response([
-            'message' => 'berhasil'
+            'msg' => 'berhasil'
         ]);
     }
 
@@ -169,7 +204,7 @@ class UserController extends Controller
         $follow->save();
 
         return response([
-            'message' => 'berhasil'
+            'msg' => 'berhasil'
         ]);
     }
 
@@ -191,5 +226,44 @@ class UserController extends Controller
                 'users' => $followers
             ]
         ]);
+    }
+    
+    public function delAcc(Request $request)
+    {
+        $u = request()->user();
+        $user_id = $u->user_id;
+        
+        $user = User::where('user_id', $user_id)->first();
+        
+        if (!$user || !Hash::check($request->pass, $user->password)) {
+            return response([
+                'error' => ['The password is wrong!']
+            ], 400);
+        }
+
+        $user_posts = UserPost::where('owner', $user_id)->get();
+        foreach ($user_posts as $user_post) {
+            UserPostLike::where('post_id', $user_post->id)->delete();
+        }
+
+        UserPostLike::where('user_liked', $user_id)->delete();
+        UserPost::where('owner', $user_id)->delete();
+
+        $lowongan = Lowongan::where('owner', $user_id)->get();
+        foreach ($lowongan as $lw) {
+            LowonganDetail::where('lowongan_id', $lw->id)->delete();
+        }
+
+        LowonganDetail::where('pelamar', $user_id)->delete();
+        Lowongan::where('owner', $user_id)->delete();
+
+        Follow::where('follower', $user_id)->delete();
+        Follow::where('following', $user_id)->delete();
+
+        $u->tokens()->where('id', $u->currentAccessToken()->id)->delete();
+
+        User::where('user_id', $user_id)->delete();
+
+        return response(['message' => 'Berhasil hapus akun!']);
     }
 }
